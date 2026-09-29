@@ -3,7 +3,7 @@ name: Materialize Briza CAD source
 on:
   push:
     paths:
-      - 'bootstrap/source.zip.b64'
+      - 'bootstrap/part-*'
 
 permissions:
   contents: write
@@ -20,15 +20,14 @@ jobs:
       - name: Decode source archive
         run: |
           mkdir -p /tmp/briza-source
-          base64 -d bootstrap/source.zip.b64 > /tmp/briza-source.zip
+          cat bootstrap/part-* | tr -d '\n\r' | base64 -d > /tmp/briza-source.zip
+          echo "b5af6d422cfd7430f0b0f42615c3cb8d04ae50d7073b4bf6b319c54dfaf2b4ff  /tmp/briza-source.zip" | sha256sum -c -
           unzip -q /tmp/briza-source.zip -d /tmp/briza-source
 
       - name: Replace repository working tree
         run: |
           rsync -a --delete             --exclude='.git/'             --exclude='.github/workflows/materialize-source.yml'             /tmp/briza-source/ ./
           rm -rf bootstrap
-          mkdir -p .github/workflows
-          cp "$GITHUB_WORKSPACE/.github/workflows/materialize-source.yml" /tmp/materialize-source.yml 2>/dev/null || true
 
       - name: Commit project source
         run: |
